@@ -1,0 +1,15 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowKMSSigning",
+            "Effect": "Allow",
+            "Action": [
+                "kms:Sign",
+                "kms:GetPublicKey",
+                "kms:DescribeKey"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

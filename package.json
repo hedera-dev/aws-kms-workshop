@@ -1,0 +1,27 @@
+{
+  "name": "aws-kms-workshop",
+  "version": "1.0.0",
+  "description": "Hedera + AWS KMS signing workshop",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hedera-dev/aws-kms-workshop.git"
+  },
+  "author": "Hedera",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/hedera-dev/aws-kms-workshop/issues"
+  },
+  "homepage": "https://github.com/hedera-dev/aws-kms-workshop#readme",
+  "dependencies": {
+    "@aws-sdk/client-kms": "^3.92.0",
+    "@hashgraph/sdk": "^2.14.0",
+    "asn1.js": "^5.4.1",
+    "dotenv": "^16.0.1",
+    "elliptic": "^6.5.4",
+    "keccak256": "^1.0.6"
+  }
+}
