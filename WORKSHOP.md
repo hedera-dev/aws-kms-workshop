@@ -365,9 +365,9 @@ The output (e.g., `02edbf4926f65441dc403919dd884a8389b6ae2da4009892d49513c2250c1
 │     └─▶ Use funding account to create new account with KMS pubkey   │
 │                                                                     │
 │  3. SET UP CUSTOM SIGNER                                            │
-│     └─▶ client.setOperatorWith(accountId, pubKey, transactionSigner)│
+│     └─▶ kmsSignedClient.setOperatorWith(accountId, pubKey, signer)  │
 │                                                                     │
-│  4. SIGN TRANSACTIONS (transactionSigner function)                  │
+│  4. SIGN TRANSACTIONS (signer function)                             │
 │     ├─▶ Receive transaction bytes                                   │
 │     ├─▶ Create keccak256 hash of bytes                              │
 │     ├─▶ Send hash to KMS → SignCommand                              │
@@ -396,36 +396,34 @@ const kmsClient = new KMSClient({
 
 **2. Transaction Signer (the magic happens here):**
 ```javascript
-async function transactionSigner(bytesToSign) {
+const signer = async (message) => {
   // 1. Hash the transaction bytes with keccak256
-  const dataHex = Buffer.from(bytesToSign).toString("hex");
-  const hash = keccak256(`0x${dataHex}`);
+  const hash = keccak256(Buffer.from(message));
 
   // 2. Send to KMS for signing
-  const command = new SignCommand({
-    KeyId: process.env.AWS_AWS_KMS_KEY_ID,
-    Message: hash,
-    SigningAlgorithm: "ECDSA_SHA_256",
-    MessageType: "DIGEST"
-  });
-  const response = await kmsClient.send(command);
+  const signResponse = await kmsClient.send(
+    new SignCommand({
+      KeyId: keyId,
+      Message: hash,
+      MessageType: "DIGEST",
+      SigningAlgorithm: "ECDSA_SHA_256",
+    })
+  );
 
   // 3. Parse DER signature to raw format (r || s)
-  let decoded = EcdsaSigAsnParse.decode(Buffer.from(response.Signature), "der");
-  let r = decoded.r.toArray("be", 32);
-  let s = decoded.s.toArray("be", 32);
+  const decoded = EcdsaSigAsnParse.decode(Buffer.from(signResponse.Signature), "der");
+  const signature = new Uint8Array(64);
+  signature.set(decoded.r.toArray("be", 32), 0);
+  signature.set(decoded.s.toArray("be", 32), 32);
 
-  const result = new Uint8Array(64);
-  result.set(r, 0);
-  result.set(s, 32);
-  return result;
-}
+  return signature;
+};
 ```
 
 **3. Using the Custom Signer:**
 ```javascript
-// This tells Hedera SDK to use our transactionSigner for all signatures
-client.setOperatorWith(newAccountId, newAccountPublicKey, transactionSigner);
+// This tells Hedera SDK to use our signer for all signatures
+kmsSignedClient.setOperatorWith(newAccountId, publicKey, signer);
 ```
 
 ---
