@@ -250,8 +250,15 @@ Expected output (key fields to verify):
         "Enabled": true,
         "Description": "Hedera Transaction Signing Key",
         "KeyUsage": "SIGN_VERIFY",
+        "KeyState": "Enabled",
+        "Origin": "AWS_KMS",
+        "KeyManager": "CUSTOMER",
+        "CustomerMasterKeySpec": "ECC_SECG_P256K1",
         "KeySpec": "ECC_SECG_P256K1",
-        "SigningAlgorithms": ["ECDSA_SHA_256"]
+        "SigningAlgorithms": [
+            "ECDSA_SHA_256"
+        ],
+        "MultiRegion": false
     }
 }
 ```
@@ -334,7 +341,7 @@ Done
 **1. Check AWS CloudTrail for Sign operations:**
 
 ```bash
-aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=Sign --max-results 5
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=Sign --max-results 10
 ```
 
 This shows recent KMS Sign operations, confirming your transactions were signed by KMS.
@@ -364,7 +371,7 @@ The output (e.g., `02edbf4926f65441dc403919dd884a8389b6ae2da4009892d49513c2250c1
 │  2. CREATE HEDERA ACCOUNT                                           │
 │     └─▶ Use funding account to create new account with KMS pubkey   │
 │                                                                     │
-│  3. SET UP CUSTOM SIGNER                                            │
+│  3. SET UP CUSTOM SIGNER                                          │
 │     └─▶ kmsSignedClient.setOperatorWith(accountId, pubKey, signer)  │
 │                                                                     │
 │  4. SIGN TRANSACTIONS (signer function)                             │
@@ -462,7 +469,8 @@ aws kms schedule-key-deletion --key-id $AWS_KMS_KEY_ID --pending-window-in-days 
 aws kms delete-alias --alias-name alias/hedera-signing-key
 
 # Delete IAM user access keys
-aws iam delete-access-key --user-name hedera-kms-user --access-key-id $AWS_KMS_ACCESS_KEY_ID
+ACCESS_KEY_ID=$(aws iam list-access-keys --user-name hedera-kms-user --query 'AccessKeyMetadata[0].AccessKeyId' --output text)
+aws iam delete-access-key --user-name hedera-kms-user --access-key-id $ACCESS_KEY_ID
 
 # Detach policy from user
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
